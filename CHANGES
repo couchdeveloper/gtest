@@ -1,3 +1,9 @@
+Changes 
+
+* Updated source and Xcode projects which now compile with clang's
+  C++11 compiler and clang's standard C++11 library.
+
+
 Changes for 1.6.0:
 
 * New feature: ADD_FAILURE_AT() for reporting a test failure at the

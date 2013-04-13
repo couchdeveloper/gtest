@@ -376,6 +376,13 @@
 #   define GTEST_HAS_RTTI 0
 #  endif
 
+# elif defined (__clang__) 
+#  if __has_feature(cxx_rtti)
+#    define GTEST_HAS_RTTI 1
+#  else
+#    define GTEST_HAS_RTTI 0
+#  endif
+
 // Starting with version 4.3.2, gcc defines __GXX_RTTI iff RTTI is enabled.
 # elif defined(__GNUC__) && (GTEST_GCC_VER_ >= 40302)
 
@@ -429,12 +436,31 @@
 # include <time.h>  // NOLINT
 #endif
 
-// Determines whether Google Test can use tr1/tuple.  You can define
+// GTEST_HAS_STD_TUPLE
+// If defined and if set to 1, Google test can use std::tuple. This requires
+// a C++11 conforming compiler and a corresponding C++11 standard library.
+// If this macro is defined, macro GTEST_HAS_TR1_TUPLE will be ignored.
+#if !defined (GTEST_HAS_STD_TUPLE)
+  // If this is clang, and if language dialect is C++11 and if using clang's C++ std lib:
+# if defined (__llvm__) && defined (__clang__) && __has_feature(cxx_rvalue_references) && defined(_LIBCPP_VERSION)
+#  define GTEST_HAS_STD_TUPLE 1
+# else
+#  error __clang__ not defined
+#  define GTEST_HAS_STD_TUPLE 0
+# endif
+
+#endif
+
+// Determines whether Google Test can use tr1::tuple. You can define
 // this macro to 0 to prevent Google Test from using tuple (any
 // feature depending on tuple with be disabled in this mode).
-#ifndef GTEST_HAS_TR1_TUPLE
-// The user didn't tell us not to do it, so we assume it's OK.
-# define GTEST_HAS_TR1_TUPLE 1
+#if !GTEST_HAS_STD_TUPLE && !defined (GTEST_HAS_TR1_TUPLE)
+# if defined(__clang__)
+#  define GTEST_HAS_TR1_TUPLE 0
+# else
+    // The user didn't tell us not to do it, so we assume it's OK.
+#  define GTEST_HAS_TR1_TUPLE 1
+# endif
 #endif  // GTEST_HAS_TR1_TUPLE
 
 // Determines whether Google Test's own tr1 tuple implementation
@@ -445,11 +471,15 @@
 // We use our own TR1 tuple if we aren't sure the user has an
 // implementation of it already.  At this time, GCC 4.0.0+ and MSVC
 // 2010 are the only mainstream compilers that come with a TR1 tuple
-// implementation.  NVIDIA's CUDA NVCC compiler pretends to be GCC by
+// implementation. NVIDIA's CUDA NVCC compiler pretends to be GCC by
 // defining __GNUC__ and friends, but cannot compile GCC's tuple
 // implementation.  MSVC 2008 (9.0) provides TR1 tuple in a 323 MB
 // Feature Pack download, which we cannot assume the user has.
-# if (defined(__GNUC__) && !defined(__CUDACC__) && (GTEST_GCC_VER_ >= 40000)) \
+// Clang using it's own C++ standard lib does not have a TR1 implementation,
+// but does have a C++11 implementation. In this case, we require C++11.
+# if defined(__clang__) && defined(_LIBCPP_VERSION)
+#  define GTEST_USE_OWN_TR1_TUPLE 0
+# elif (defined(__GNUC__) && !defined(__CUDACC__) && (GTEST_GCC_VER_ >= 40000)) \
     || _MSC_VER >= 1600
 #  define GTEST_USE_OWN_TR1_TUPLE 0
 # else
@@ -457,6 +487,10 @@
 # endif
 
 #endif  // GTEST_USE_OWN_TR1_TUPLE
+
+#if GTEST_USE_OWN_TR1_TUPLE
+# warning GTEST_USE_OWN_TR1_TUPLE = 1
+#endif
 
 // To avoid conditional compilation everywhere, we make it
 // gtest-port.h's responsibility to #include the header implementing
@@ -481,7 +515,7 @@
 #  define BOOST_TR1_DETAIL_CONFIG_HPP_INCLUDED
 #  include <tuple>
 
-# elif defined(__GNUC__) && (GTEST_GCC_VER_ >= 40000)
+# elif defined(__GLIBCXX__) && defined(__GNUC__) && (GTEST_GCC_VER_ >= 40000)
 // GCC 4.0+ implements tr1/tuple in the <tr1/tuple> header.  This does
 // not conform to the TR1 spec, which requires the header to be <tuple>.
 
@@ -506,6 +540,14 @@
 # endif  // GTEST_USE_OWN_TR1_TUPLE
 
 #endif  // GTEST_HAS_TR1_TUPLE
+
+//#if GTEST_HAS_STD_TUPLE
+//# define GTEST_NS_TUPLE ::std
+//#elif GTEST_HAS_TR1_TUPLE
+//# define GTEST_NS_TUPLE ::std::tr1
+//#endif
+//
+//#define GTEST_HAS_TUPLE (GTEST_HAS_STD_TUPLE || GTEST_HAS_TR1_TUPLE)
 
 // Determines whether clone(2) is supported.
 // Usually it will only be available on Linux, excluding

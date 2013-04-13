@@ -23,8 +23,20 @@ WARNING_CFLAGS = -Wall -Werror -Wendif-labels -Wnewline-eof -Wno-sign-compare -W
 // http://lists.apple.com/archives/Xcode-users/2006/Feb/msg00050.html
 SEPARATE_STRIP = YES
 
-// Force C99 dialect
-GCC_C_LANGUAGE_STANDARD = c99
+
+// C++ Compiler
+GCC_VERSION = com.apple.compilers.llvm.clang.1_0
+
+//:completeSettings = none
+
+
+// C++ Language (C++11)
+CLANG_CXX_LANGUAGE_STANDARD = c++0x
+
+// C++ Standard Library
+CLANG_CXX_LIBRARY = libc++
+
+
 
 // not sure why apple defaults this on, but it's pretty risky
 ALWAYS_SEARCH_USER_PATHS = NO
@@ -32,10 +44,8 @@ ALWAYS_SEARCH_USER_PATHS = NO
 // Turn on position dependent code for most cases (overridden where appropriate)
 GCC_DYNAMIC_NO_PIC = YES
 
-// Default SDK and minimum OS version is 10.4
-SDKROOT = $(DEVELOPER_SDK_DIR)/MacOSX10.4u.sdk
-MACOSX_DEPLOYMENT_TARGET = 10.4
-GCC_VERSION = 4.0
+// Minimum OS version is 10.7
+MACOSX_DEPLOYMENT_TARGET = 10.7
 
 // VERSIONING BUILD SETTINGS (used in Info.plist)
 GTEST_VERSIONINFO_ABOUT =  © 2008 Google Inc.
